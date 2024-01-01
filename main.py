@@ -10,15 +10,13 @@ class Board:
     def __init__(self, side, left=0, top=50):
         self.side = side
         self.board = [[randint(1, 5) for _ in range(side)] for _ in range(side)]
-        # while self.row_of_3_on_board:
-        #     self.board = [[randint(1, 5) for _ in range(side)] for _ in range(side)]
-        #     комп умирает
         self.all_sprites = pygame.sprite.Group()
         self.left = left
         self.top = top
         self.cell_size = 420 // side
 
     def render(self, screen):
+        squares = []
         for i in range(self.side):
             for j in range(self.side):
                 sprite = pygame.sprite.Sprite(self.all_sprites)
@@ -27,7 +25,10 @@ class Board:
                 sprite.rect = sprite.image.get_rect()
                 sprite.rect.x = i * self.cell_size + self.left
                 sprite.rect.y = j * self.cell_size + self.top
+                squares.append((sprite.rect.x, sprite.rect.y, self.cell_size, self.cell_size))
         self.all_sprites.draw(screen)
+        for square in squares:
+            pygame.draw.rect(screen, 'black', square, 1)
 
     def move(self, cell):
         pass
@@ -45,13 +46,29 @@ class Board:
         if cell:
             self.on_click(cell)
 
-    def row_of_3_on_board(self):
+    def del_line(self):
+        line_to_del = []
         for x in range(1, self.side - 1):
             for y in range(1, self.side - 1):
-                if self.board[x - 1][y] == self.board[x][y] == self.board[x + 1][y] or\
-                        self.board[x][y - 1] == self.board[x][y] == self.board[x][y + 1]:
-                    return True
-        return False
+                if self.board[x - 1][y] == self.board[x][y] == self.board[x + 1][y]:
+                    line_to_del.extend([(x - 1, y), (x, y), (x + 1, y)])
+                    for x_add in range(x - 1, 0, -1):
+                        if self.board[x_add][y] == line_to_del[0]:
+                            line_to_del.append((x_add, y))
+                    for x_add in range(x + 1, self.side):
+                        if self.board[x_add][y] == line_to_del[0]:
+                            line_to_del.append((x_add, y))
+                if self.board[x][y - 1] == self.board[x][y] == self.board[x][y + 1]:
+                    line_to_del.extend([(x, y - 1), (x, y), (x, y + 1)])
+                    for y_add in range(y - 1, 0, -1):
+                        if self.board[x][y_add] == line_to_del[0]:
+                            line_to_del.append((x, y_add))
+                    for y_add in range(y + 1, self.side):
+                        if self.board[x][y_add] == line_to_del[0]:
+                            line_to_del.append((x, y_add))
+        if line_to_del:
+            return line_to_del
+        return
 
 
 def load_image(name, color_key=None):
@@ -129,6 +146,7 @@ def main():
     board.render(screen2)
     pygame.display.flip()
     running = True
+    print(board.del_line())
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
