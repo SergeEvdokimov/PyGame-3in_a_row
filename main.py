@@ -48,26 +48,28 @@ class Board:
 
     def del_line(self):
         line_to_del = []
-        for x in range(1, self.side - 1):
-            for y in range(1, self.side - 1):
-                if self.board[x - 1][y] == self.board[x][y] == self.board[x + 1][y]:
-                    line_to_del.extend([(x - 1, y), (x, y), (x + 1, y)])
-                    for x_add in range(x - 1, 0, -1):
-                        if self.board[x_add][y] == line_to_del[0]:
-                            line_to_del.append((x_add, y))
-                    for x_add in range(x + 1, self.side):
-                        if self.board[x_add][y] == line_to_del[0]:
-                            line_to_del.append((x_add, y))
-                if self.board[x][y - 1] == self.board[x][y] == self.board[x][y + 1]:
-                    line_to_del.extend([(x, y - 1), (x, y), (x, y + 1)])
-                    for y_add in range(y - 1, 0, -1):
-                        if self.board[x][y_add] == line_to_del[0]:
-                            line_to_del.append((x, y_add))
-                    for y_add in range(y + 1, self.side):
-                        if self.board[x][y_add] == line_to_del[0]:
-                            line_to_del.append((x, y_add))
+        for x in range(self.side):
+            for y in range(self.side):
+                if 1 <= x < self.side - 1:
+                    if self.board[x - 1][y] == self.board[x][y] == self.board[x + 1][y]:
+                        line_to_del.extend([(x - 1, y), (x, y), (x + 1, y)])
+                        for x_add in range(x - 1, 0, -1):
+                            if self.board[x_add][y] == line_to_del[0]:
+                                line_to_del.append((x_add, y))
+                        for x_add in range(x + 1, self.side):
+                            if self.board[x_add][y] == line_to_del[0]:
+                                line_to_del.append((x_add, y))
+                if 1 <= y < self.side - 1:
+                    if self.board[x][y - 1] == self.board[x][y] == self.board[x][y + 1]:
+                        line_to_del.extend([(x, y - 1), (x, y), (x, y + 1)])
+                        for y_add in range(y - 1, 0, -1):
+                            if self.board[x][y_add] == line_to_del[0]:
+                                line_to_del.append((x, y_add))
+                        for y_add in range(y + 1, self.side):
+                            if self.board[x][y_add] == line_to_del[0]:
+                                line_to_del.append((x, y_add))
         if line_to_del:
-            return line_to_del
+            return set(line_to_del)
         return
 
 
