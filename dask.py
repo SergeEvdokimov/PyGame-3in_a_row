@@ -1,74 +1,100 @@
 import pygame
-import os
 from random import randint
-from main import load_image
-
+from load_image import load_image
 
 class Board:
-    def __init__(self, width, height, left=0, top=50):
-        self.width = width
-        self.height = height
-        self.board = [[0] * width for _ in range(height)]
+    def __init__(self, side, left=0, top=50):
+        self.side = side
+        self.board = [[randint(1, 5) for _ in range(side)] for _ in range(side)]
         self.all_sprites = pygame.sprite.Group()
         self.left = left
         self.top = top
-        self.cell_size = 420 // width
+        self.cell_size = 420 // side
+        self.cells_for_swap = []
 
     def render(self, screen):
-        for i in range(self.height):
-            for j in range(self.width):
-                self.board[i][j] = randint(1, 5)
+        squares = []
+        for i in range(self.side):
+            for j in range(self.side):
                 sprite = pygame.sprite.Sprite(self.all_sprites)
                 sprite.image = load_image(f"{self.board[i][j]}.png", 'white')
                 sprite.image = pygame.transform.scale(sprite.image, (self.cell_size, self.cell_size))
                 sprite.rect = sprite.image.get_rect()
                 sprite.rect.x = i * self.cell_size + self.left
                 sprite.rect.y = j * self.cell_size + self.top
+                squares.append((sprite.rect.x, sprite.rect.y, self.cell_size, self.cell_size))
         self.all_sprites.draw(screen)
+        for square in squares:
+            pygame.draw.rect(screen, 'black', square, 1)
+        self.cells_for_swap.clear()
 
-
+    # анимация
     def move(self, cell):
         pass
 
-    def get_cell(self, mouse_pos):
-        cell_x = (mouse_pos[0] - self.left) // self.cell_size
-        cell_y = (mouse_pos[1] - self.top) // self.cell_size
-        if cell_x < 0 or cell_x >= self.width or cell_y < 0 or cell_y >= self.height:
-            return None
-        return cell_x, cell_y
+    # обмен клеток местами, после - перезаполнение
+    def on_click(self, screen):
+        x1, y1 = self.cells_for_swap[0]
+        x2, y2 = self.cells_for_swap[1]
+        self.board[x1][y1], self.board[x2][y2] = self.board[x2][y2], self.board[x1][y1]
+        self.render(screen)
+        line_for_del = self.del_line()
+        # в случае, если удалять нечего, клетки меняются обратно
+        if line_for_del:
+            self.delete()
+        else:
+            pygame.time.delay(500)
+            self.board[x1][y1], self.board[x2][y2] = self.board[x2][y2], self.board[x1][y1]
+            self.render(screen)
 
-    def get_click(self, mouse_pos):
+
+    # возвращает координаты клетки (ячейки в массиве)
+    def get_cell(self, mouse_pos):
+        cell_x, cell_y = (mouse_pos[0] - self.left) // self.cell_size, (mouse_pos[1] - self.top) // self.cell_size
+        if 0 <= cell_x <= self.side and 0 <= cell_y <= self.side:
+            return cell_x, cell_y
+
+    # при нажатии на кнопку проверяется, было ли нажатие внутри поля
+    def get_click(self, mouse_pos, screen):
         cell = self.get_cell(mouse_pos)
         if cell:
-            self.on_click(cell)
+            self.cells_for_swap.append(cell)
+            if len(self.cells_for_swap) == 2:
+                if abs(cell[0] - self.cells_for_swap[0][0]) == 1 and cell[1] - self.cells_for_swap[0][1] == 0:
+                    self.on_click(screen)
+                elif abs(cell[1] - self.cells_for_swap[0][1]) == 1 and cell[0] - self.cells_for_swap[0][0] == 0:
+                    self.on_click(screen)
+                else:
+                    self.cells_for_swap.clear()
 
-def game(lvl=7):
-    pygame.init()
-    size = 420, 470
-    screen = pygame.display.set_mode(size)
-    pygame.display.set_caption('3 в ряд')
-    board = Board(lvl, lvl)
-    screen.fill('white')
-    cnt = 0
-    cnt_fon = pygame.font.Font(None, 36)
-    score = cnt_fon.render('Scores:', True, (255, 66, 103))
-    counter = cnt_fon.render(f'{cnt}', True, (180, 0, 0))
-    screen.blit(score, (10, 10))
-    screen.blit(counter, (100, 10))
-    board.render(screen)
-    pygame.display.flip()
-    running = True
-    while running:
-        for event in pygame.event.get():
-            if event.type == pygame.QUIT:
-                running = False
-            if event.type == pygame.MOUSEBUTTONDOWN:
-                board.move(event.pos)
-        pygame.display.flip()
-    pygame.quit()
+    # удаление клеток, возвращает координаты всех, которые следует удалить
+    def del_line(self):
+        line_to_del = []
+        for x in range(self.side):
+            for y in range(self.side):
+                if 1 <= x < self.side - 1:
+                    if self.board[x - 1][y] == self.board[x][y] == self.board[x + 1][y]:
+                        line_to_del.extend([(x - 1, y), (x, y), (x + 1, y)])
+                        for x_add in range(x - 1, 0, -1):
+                            if self.board[x_add][y] == line_to_del[0]:
+                                line_to_del.append((x_add, y))
+                        for x_add in range(x + 1, self.side):
+                            if self.board[x_add][y] == line_to_del[0]:
+                                line_to_del.append((x_add, y))
+                if 1 <= y < self.side - 1:
+                    if self.board[x][y - 1] == self.board[x][y] == self.board[x][y + 1]:
+                        line_to_del.extend([(x, y - 1), (x, y), (x, y + 1)])
+                        for y_add in range(y - 1, 0, -1):
+                            if self.board[x][y_add] == line_to_del[0]:
+                                line_to_del.append((x, y_add))
+                        for y_add in range(y + 1, self.side):
+                            if self.board[x][y_add] == line_to_del[0]:
+                                line_to_del.append((x, y_add))
+        if line_to_del:
+            # если вернется пустым, то удалять нечего
+            return set(line_to_del)
+        return
 
-
-if __name__ == '__main__':
-    levels = [7, 10, 12]
-    lvl_num = randint(0, 2)
-    game(levels[lvl_num])
+    # удаление и сдвиг
+    def delete(self, line):
+        pass
