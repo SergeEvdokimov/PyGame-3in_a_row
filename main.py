@@ -7,39 +7,70 @@ size = (700, 700)
 
 
 class Board:
-    def __init__(self, width, height, left=0, top=50):
-        self.width = width
-        self.height = height
-        self.board = [[0] * width for _ in range(height)]
+    def __init__(self, side, left=0, top=50):
+        self.side = side
+        self.board = [[randint(1, 5) for _ in range(side)] for _ in range(side)]
         self.all_sprites = pygame.sprite.Group()
         self.left = left
         self.top = top
-        self.cell_size = 420 // width
+        self.cell_size = 420 // side
 
     def render(self, screen):
-        for i in range(self.height):
-            for j in range(self.width):
-                self.board[i][j] = randint(1, 5)
+        squares = []
+        for i in range(self.side):
+            for j in range(self.side):
                 sprite = pygame.sprite.Sprite(self.all_sprites)
                 sprite.image = load_image(f"{self.board[i][j]}.png", 'white')
                 sprite.image = pygame.transform.scale(sprite.image, (self.cell_size, self.cell_size))
                 sprite.rect = sprite.image.get_rect()
                 sprite.rect.x = i * self.cell_size + self.left
                 sprite.rect.y = j * self.cell_size + self.top
+                squares.append((sprite.rect.x, sprite.rect.y, self.cell_size, self.cell_size))
         self.all_sprites.draw(screen)
+        for square in squares:
+            pygame.draw.rect(screen, 'black', square, 1)
 
     def move(self, cell):
         pass
 
+    def on_click(self, cell):
+        pass
+
     def get_cell(self, mouse_pos):
         cell_x, cell_y = (mouse_pos[0] - self.left) // self.cell_size, (mouse_pos[1] - self.top) // self.cell_size
-        if 0 <= cell_x <= self.width and 0 <= cell_y <= self.height:
+        if 0 <= cell_x <= self.side and 0 <= cell_y <= self.side:
             return cell_x, cell_y
 
     def get_click(self, mouse_pos):
         cell = self.get_cell(mouse_pos)
         if cell:
             self.on_click(cell)
+
+    def del_line(self):
+        line_to_del = []
+        for x in range(self.side):
+            for y in range(self.side):
+                if 1 <= x < self.side - 1:
+                    if self.board[x - 1][y] == self.board[x][y] == self.board[x + 1][y]:
+                        line_to_del.extend([(x - 1, y), (x, y), (x + 1, y)])
+                        for x_add in range(x - 1, 0, -1):
+                            if self.board[x_add][y] == line_to_del[0]:
+                                line_to_del.append((x_add, y))
+                        for x_add in range(x + 1, self.side):
+                            if self.board[x_add][y] == line_to_del[0]:
+                                line_to_del.append((x_add, y))
+                if 1 <= y < self.side - 1:
+                    if self.board[x][y - 1] == self.board[x][y] == self.board[x][y + 1]:
+                        line_to_del.extend([(x, y - 1), (x, y), (x, y + 1)])
+                        for y_add in range(y - 1, 0, -1):
+                            if self.board[x][y_add] == line_to_del[0]:
+                                line_to_del.append((x, y_add))
+                        for y_add in range(y + 1, self.side):
+                            if self.board[x][y_add] == line_to_del[0]:
+                                line_to_del.append((x, y_add))
+        if line_to_del:
+            return set(line_to_del)
+        return
 
 
 def load_image(name, color_key=None):
@@ -102,11 +133,11 @@ def main():
     screen2 = pygame.display.set_mode(size)
     pygame.display.set_caption('3 в ряд')
     if lvl_num == 1:
-        board = Board(7, 7)
+        board = Board(7)
     elif lvl_num == 2:
-        board = Board(10, 10)
+        board = Board(10)
     else:
-        board = Board(12, 12)
+        board = Board(12)
     screen2.fill('white')
     cnt = 0
     cnt_fon = pygame.font.Font(None, 36)
@@ -117,6 +148,7 @@ def main():
     board.render(screen2)
     pygame.display.flip()
     running = True
+    print(board.del_line())
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
