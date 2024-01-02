@@ -5,6 +5,7 @@ from dask import Board
 
 size = (700, 700)
 
+
 def intro(screen, start_background_image):
     intro_text = ["Выберить размер поля:", "7 на 7", "10 на 10", "12 на 12"]
     fon = pygame.transform.scale(start_background_image, size)
@@ -65,8 +66,6 @@ def main():
     board.render(screen2)
     pygame.display.flip()
     running = True
-    swap_cells = 0
-    print(board.del_line())
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:

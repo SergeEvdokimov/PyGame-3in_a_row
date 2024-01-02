@@ -2,6 +2,7 @@ import pygame
 from random import randint
 from load_image import load_image
 
+
 class Board:
     def __init__(self, side, left=0, top=50):
         self.side = side
@@ -47,7 +48,6 @@ class Board:
             self.board[x1][y1], self.board[x2][y2] = self.board[x2][y2], self.board[x1][y1]
             self.render(screen)
 
-
     # возвращает координаты клетки (ячейки в массиве)
     def get_cell(self, mouse_pos):
         cell_x, cell_y = (mouse_pos[0] - self.left) // self.cell_size, (mouse_pos[1] - self.top) // self.cell_size
@@ -59,13 +59,17 @@ class Board:
         cell = self.get_cell(mouse_pos)
         if cell:
             self.cells_for_swap.append(cell)
-            if len(self.cells_for_swap) == 2:
+            if len(self.cells_for_swap) == 1:
+                pygame.draw.rect(screen, 'green', (self.cells_for_swap[0][0] * self.cell_size + self.left,
+                                                   self.cells_for_swap[0][1] * self.cell_size + self.top,
+                                                   self.cell_size, self.cell_size), 1)
+            elif len(self.cells_for_swap) == 2:
                 if abs(cell[0] - self.cells_for_swap[0][0]) == 1 and cell[1] - self.cells_for_swap[0][1] == 0:
                     self.on_click(screen)
                 elif abs(cell[1] - self.cells_for_swap[0][1]) == 1 and cell[0] - self.cells_for_swap[0][0] == 0:
                     self.on_click(screen)
                 else:
-                    self.cells_for_swap.clear()
+                    self.render(screen)
 
     # удаление клеток, возвращает координаты всех, которые следует удалить
     def del_line(self):
@@ -96,5 +100,5 @@ class Board:
         return
 
     # удаление и сдвиг
-    def delete(self, line):
+    def delete(self):
         pass
