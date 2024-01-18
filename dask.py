@@ -2,17 +2,21 @@ import pygame
 from random import randint
 from load_image import load_image
 
+
 class Board:
-    def __init__(self, side, left=0, top=50):
+    def __init__(self, side, screen, left=0, top=50):
+        self.screen = screen
         self.side = side
-        self.board = [[randint(1, 5) for _ in range(side)] for _ in range(side)]
+        self.board =[[randint(1, 5) for _ in range(side)] for _ in range(side)]
         self.all_sprites = pygame.sprite.Group()
         self.left = left
         self.top = top
         self.cell_size = 420 // side
         self.cells_for_swap = []
 
-    def render(self, screen):
+    def render(self, screen=None):
+        if screen is None:
+            screen = self.screen
         squares = []
         for i in range(self.side):
             for j in range(self.side):
@@ -33,20 +37,18 @@ class Board:
         pass
 
     # обмен клеток местами, после - перезаполнение
-    def on_click(self, screen):
+    def on_click(self):
         x1, y1 = self.cells_for_swap[0]
         x2, y2 = self.cells_for_swap[1]
         self.board[x1][y1], self.board[x2][y2] = self.board[x2][y2], self.board[x1][y1]
-        self.render(screen)
+        self.render()
+        pygame.display.flip()
         line_for_del = self.del_line()
         # в случае, если удалять нечего, клетки меняются обратно
-        if line_for_del:
-            self.delete()
-        else:
+        if line_for_del is None:
             pygame.time.delay(500)
             self.board[x1][y1], self.board[x2][y2] = self.board[x2][y2], self.board[x1][y1]
-            self.render(screen)
-
+            self.render()
 
     # возвращает координаты клетки (ячейки в массиве)
     def get_cell(self, mouse_pos):
@@ -55,17 +57,21 @@ class Board:
             return cell_x, cell_y
 
     # при нажатии на кнопку проверяется, было ли нажатие внутри поля
-    def get_click(self, mouse_pos, screen):
+    def get_click(self, mouse_pos):
         cell = self.get_cell(mouse_pos)
         if cell:
             self.cells_for_swap.append(cell)
-            if len(self.cells_for_swap) == 2:
+            if len(self.cells_for_swap) == 1:
+                pygame.draw.rect(self.screen, 'green', (self.cells_for_swap[0][0] * self.cell_size + self.left,
+                                                   self.cells_for_swap[0][1] * self.cell_size + self.top,
+                                                   self.cell_size, self.cell_size), 1)
+            elif len(self.cells_for_swap) == 2:
                 if abs(cell[0] - self.cells_for_swap[0][0]) == 1 and cell[1] - self.cells_for_swap[0][1] == 0:
-                    self.on_click(screen)
+                    self.on_click()
                 elif abs(cell[1] - self.cells_for_swap[0][1]) == 1 and cell[0] - self.cells_for_swap[0][0] == 0:
-                    self.on_click(screen)
+                    self.on_click()
                 else:
-                    self.cells_for_swap.clear()
+                    self.render()
 
     # удаление клеток, возвращает координаты всех, которые следует удалить
     def del_line(self):
@@ -96,5 +102,22 @@ class Board:
         return
 
     # удаление и сдвиг
-    def delete(self, line):
-        pass
+    def delete(self, line_for_del=[]):
+        if len(line_for_del) == 0:
+            return
+        for cell in line_for_del:
+            self.board[cell[0]][cell[1]] = 0
+        for column in range(self.side):
+            if 0 in self.board[column]:
+                c = 0
+                while (0 in self.board[column] and c < self.side):
+                    # поднимает 0 вверх, после генерируя на их место новую картинку
+                    for i in range(self.side - 1, c, -1):
+                        if self.board[column][i] == 0:
+                            self.board[column][i], self.board[column][i - 1] = self.board[column][i - 1], 0
+                            if i - 1 == c:
+                                self.board[column][i - 1] = randint(1, 5)
+                        elif i - 1 == c and self.board[column][i - 1] == 0:
+                            self.board[column][i - 1] = randint(1, 5);
+                    c += 1
+        self.render()

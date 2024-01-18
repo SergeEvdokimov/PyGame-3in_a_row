@@ -6,7 +6,7 @@ from dask import Board
 size = (700, 700)
 
 def intro(screen, start_background_image):
-    intro_text = ["Выберить размер поля:", "7 на 7", "10 на 10", "12 на 12"]
+    intro_text = ["Выберите размер поля:", "7 на 7", "10 на 10", "12 на 12"]
     fon = pygame.transform.scale(start_background_image, size)
     screen.blit(fon, (0, 0))
     font = pygame.font.Font(None, 30)
@@ -14,10 +14,16 @@ def intro(screen, start_background_image):
     levels = []
 
     for line in intro_text:
-        text = font.render(line, 1, 'white')
+        text = font.render(line, 1, (255, 66, 103))
         rect = text.get_rect()
-        text_y += 30
-        rect.topleft = (30, text_y)
+        #text_y += 5
+        text_x = 240
+        if line == "7 на 7":
+            text_x = 320
+        elif line != "Выберите размер поля:":
+            text_x = 310
+        text_y += rect.height
+        rect.topleft = (text_x, text_y)
         text_y += rect.height
         screen.blit(text, rect)
         levels.append([rect.x, rect.y, rect.width, rect.height])
@@ -34,6 +40,15 @@ def intro(screen, start_background_image):
                         return levels.index(i)
         pygame.display.flip()
 
+def make_current_board(board):
+    line_for_del = board.del_line()
+    cnt = 0
+    if not line_for_del is None:
+        cnt = len(line_for_del)
+    while not line_for_del is None:
+        board.delete(line_for_del)
+        line_for_del = board.del_line()
+    return cnt
 
 def main():
     global size
@@ -50,11 +65,11 @@ def main():
     screen2 = pygame.display.set_mode(size)
     pygame.display.set_caption('3 в ряд')
     if lvl_num == 1:
-        board = Board(7)
+        board = Board(7, screen2)
     elif lvl_num == 2:
-        board = Board(10)
+        board = Board(10, screen2)
     else:
-        board = Board(12)
+        board = Board(12, screen2)
     screen2.fill('white')
     cnt = 0
     cnt_fon = pygame.font.Font(None, 36)
@@ -62,20 +77,28 @@ def main():
     counter = cnt_fon.render(f'{cnt}', True, (180, 0, 0))
     screen2.blit(score, (10, 10))
     screen2.blit(counter, (100, 10))
-    board.render(screen2)
+    board.render()
+    pygame.display.flip()
+    make_current_board(board)
     pygame.display.flip()
     running = True
-    swap_cells = 0
-    print(board.del_line())
     while running:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
                 running = False
             if event.type == pygame.MOUSEBUTTONDOWN:
-                board.get_click(event.pos, screen2)
+                board.get_click(event.pos)
+                c = cnt # временная переменная, чтобы понять, прибавилось ли очков
+                cnt += make_current_board(board)
+                if c != cnt: # если очки прибавились, то обновляем счетчик
+                    pygame.draw.rect(screen2, 'white', (100, 10, 28, 25),)
+                    counter = cnt_fon.render(f'{cnt}', True, (180, 0, 0))
+                    screen2.blit(counter, (100, 10))
         pygame.display.flip()
+        #TODO: сделать переход на заключительный экран в случае окончания игры
     pygame.quit()
 
 
 if __name__ == '__main__':
     main()
+
