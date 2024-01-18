@@ -5,6 +5,7 @@ from dask import Board
 
 size = (700, 700)
 
+
 def intro(screen, start_background_image):
     intro_text = ["Выберите размер поля:", "7 на 7", "10 на 10", "12 на 12"]
     fon = pygame.transform.scale(start_background_image, size)
