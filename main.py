@@ -5,6 +5,7 @@ from dask import Board
 
 size = (700, 700)
 
+
 def intro(screen, start_background_image):
     intro_text = ["Выберите размер поля:", "7 на 7", "10 на 10", "12 на 12"]
     fon = pygame.transform.scale(start_background_image, size)
@@ -16,7 +17,6 @@ def intro(screen, start_background_image):
     for line in intro_text:
         text = font.render(line, 1, (255, 66, 103))
         rect = text.get_rect()
-        #text_y += 5
         text_x = 240
         if line == "7 на 7":
             text_x = 320
@@ -40,15 +40,17 @@ def intro(screen, start_background_image):
                         return levels.index(i)
         pygame.display.flip()
 
+
 def make_current_board(board):
     line_for_del = board.del_line()
     cnt = 0
-    if not line_for_del is None:
+    if line_for_del is not None:
         cnt = len(line_for_del)
-    while not line_for_del is None:
+    while line_for_del is not None:
         board.delete(line_for_del)
         line_for_del = board.del_line()
     return cnt
+
 
 def main():
     global size
@@ -88,17 +90,16 @@ def main():
                 running = False
             if event.type == pygame.MOUSEBUTTONDOWN:
                 board.get_click(event.pos)
-                c = cnt # временная переменная, чтобы понять, прибавилось ли очков
+                c = cnt  # временная переменная, чтобы понять, прибавилось ли очков
                 cnt += make_current_board(board)
-                if c != cnt: # если очки прибавились, то обновляем счетчик
-                    pygame.draw.rect(screen2, 'white', (100, 10, 28, 25),)
+                if c != cnt:  # если очки прибавились, то обновляем счетчик
+                    pygame.draw.rect(screen2, 'white', (100, 10, 28, 25))
                     counter = cnt_fon.render(f'{cnt}', True, (180, 0, 0))
                     screen2.blit(counter, (100, 10))
         pygame.display.flip()
-        #TODO: сделать переход на заключительный экран в случае окончания игры
+        #  TODO: сделать переход на заключительный экран в случае окончания игры
     pygame.quit()
 
 
 if __name__ == '__main__':
     main()
-
