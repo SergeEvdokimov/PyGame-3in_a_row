@@ -93,7 +93,7 @@ def main():
                 new_board = make_current_board(board)
                 if new_board:  # если очки прибавились, то обновляем счетчик
                     cnt += new_board
-                    pygame.draw.rect(screen2, 'white', (100, 10, 28, 25))
+                    pygame.draw.rect(screen2, 'white', (100, 10, 100, 25))
                     counter = cnt_fon.render(f'{cnt}', True, (180, 0, 0))
                     screen2.blit(counter, (100, 10))
         pygame.display.flip()
