@@ -90,9 +90,9 @@ def main():
                 running = False
             if event.type == pygame.MOUSEBUTTONDOWN:
                 board.get_click(event.pos)
-                c = cnt  # временная переменная, чтобы понять, прибавилось ли очков
-                cnt += make_current_board(board)
-                if c != cnt:  # если очки прибавились, то обновляем счетчик
+                new_board = make_current_board(board)
+                if new_board:  # если очки прибавились, то обновляем счетчик
+                    cnt += new_board
                     pygame.draw.rect(screen2, 'white', (100, 10, 28, 25))
                     counter = cnt_fon.render(f'{cnt}', True, (180, 0, 0))
                     screen2.blit(counter, (100, 10))
