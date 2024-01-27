@@ -11,6 +11,7 @@ from PyQt5.QtWidgets import QMainWindow
 con = sqlite3.connect('Results.sqlite')
 cur = con.cursor()
 size = (700, 700)
+nickname = ''
 
 class Enter(QMainWindow):
     def __init__(self):
@@ -25,10 +26,13 @@ class Enter(QMainWindow):
                         WHERE Name = '{name}'""").fetchall())
 
     def enter(self):
-        company_is_registered = self.check_name(self.Name.text())
+        global nickname
+        nickname = self.Name.text()
+        company_is_registered = self.check_name(nickname)
         if not company_is_registered:
             cur.execute(f"""INSERT INTO result(Name, num_of_move) 
-                                    VALUES('{self.Name.text()}', '{0}')""")
+                                    VALUES('{nickname}', '{0}')""")
+            con.commit()
         self.close()
 
 
@@ -133,6 +137,9 @@ def main():
                     counter = cnt_fon.render(f'{cnt}', True, (180, 0, 0))
                     screen2.blit(counter, (100, 10))
         pygame.display.flip()
+    cur.execute(f'''UPDATE result SET num_of_move = "{step_cnt}"
+                        WHERE Name = "{nickname}"''')
+    con.commit()
     #  TODO: таблица результатов
     pygame.quit()
 
