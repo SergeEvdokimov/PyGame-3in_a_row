@@ -45,8 +45,8 @@ class Board:
         pygame.display.flip()
         line_for_del = self.del_line()
         # в случае, если удалять нечего, клетки меняются обратно
+        pygame.time.delay(500)
         if line_for_del is None:
-            pygame.time.delay(500)
             self.board[x1][y1], self.board[x2][y2] = self.board[x2][y2], self.board[x1][y1]
             self.render()
 
