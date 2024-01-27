@@ -9,7 +9,7 @@ def load_image(name, color_key=None):
     except pygame.error as message:
         print('Не удаётся загрузить:', name)
         raise SystemExit(message)
-    # image = image.convert_alpha()
+    image = image.convert_alpha()
     if color_key is not None:
         if color_key == -1:
             color_key = image.get_at((0, 0))

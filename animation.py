@@ -61,4 +61,8 @@ while running:
     pygame.display.flip()
     clock.tick(50)
 
+<<<<<<< HEAD
 pygame.quit()
+=======
+pygame.quit()
+>>>>>>> origin/master
