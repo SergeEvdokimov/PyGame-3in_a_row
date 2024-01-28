@@ -13,10 +13,13 @@ class Board:
         self.top = top
         self.cell_size = 420 // side
         self.cells_for_swap = []
+        self.green_square = False
 
-    def render(self, screen=None):
+    def render(self, screen=None, draw_only=None):
         if screen is None:
             screen = self.screen
+        if not draw_only:
+            self.green_square = False
         squares = []
         for i in range(self.side):
             for j in range(self.side):
@@ -30,11 +33,10 @@ class Board:
         self.all_sprites.draw(screen)
         for square in squares:
             pygame.draw.rect(screen, 'black', square, 1)
-        self.cells_for_swap.clear()
-
-    # анимация
-    def move(self, cell):
-        pass
+        if self.green_square:
+            self.draw_green_square()
+        if not draw_only:
+            self.cells_for_swap.clear()
 
     # обмен клеток местами, после - перезаполнение
     def on_click(self):
@@ -44,7 +46,6 @@ class Board:
         self.render()
         pygame.display.flip()
         line_for_del = self.del_line()
-        pygame.time.delay(500)
         # в случае, если удалять нечего, клетки меняются обратно
         pygame.time.delay(500)
         if line_for_del is None:
@@ -57,15 +58,19 @@ class Board:
         if 0 <= cell_x <= self.side and 0 <= cell_y <= self.side:
             return cell_x, cell_y
 
+    def draw_green_square(self):
+        pygame.draw.rect(self.screen, 'green', (self.cells_for_swap[0][0] * self.cell_size + self.left,
+                                                self.cells_for_swap[0][1] * self.cell_size + self.top,
+                                                self.cell_size, self.cell_size), 1)
+
     # при нажатии на кнопку проверяется, было ли нажатие внутри поля
     def get_click(self, mouse_pos):
         cell = self.get_cell(mouse_pos)
         if cell:
             self.cells_for_swap.append(cell)
             if len(self.cells_for_swap) == 1:
-                pygame.draw.rect(self.screen, 'green', (self.cells_for_swap[0][0] * self.cell_size + self.left,
-                                                        self.cells_for_swap[0][1] * self.cell_size + self.top,
-                                                        self.cell_size, self.cell_size), 1)
+                self.green_square = True
+                self.draw_green_square()
             elif len(self.cells_for_swap) == 2:
                 if abs(cell[0] - self.cells_for_swap[0][0]) == 1 and cell[1] - self.cells_for_swap[0][1] == 0:
                     self.on_click()

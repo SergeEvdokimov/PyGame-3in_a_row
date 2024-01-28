@@ -1,10 +1,12 @@
 import pygame
-from load_image import load_image
-from dask import Board
+import random
 import sys
-from PyQt5.QtWidgets import QApplication
 import sqlite3
 
+from load_image import load_image
+from dask import Board
+
+from PyQt5.QtWidgets import QApplication
 from PyQt5 import uic
 from PyQt5.QtWidgets import QMainWindow
 
@@ -12,6 +14,35 @@ con = sqlite3.connect('Results.sqlite')
 cur = con.cursor()
 size = (700, 700)
 nickname = ''
+
+
+class Particle(pygame.sprite.Sprite):
+    # сгенерируем частицы разного размера
+    fire = [load_image("star.png", -1)]
+    for scale in (5, 10, 20):
+        fire.append(pygame.transform.scale(fire[0], (scale, scale)))
+
+    def __init__(self, sprite_group, pos, dx, dy, width, height):
+        super().__init__(sprite_group)
+        self.screen_rect = (0, 0, width, height)
+        self.image = random.choice(self.fire)
+        self.rect = self.image.get_rect()
+
+        self.velocity = [dx, dy]
+        self.rect.x, self.rect.y = pos
+        self.gravity = 1
+
+    def update(self):
+        # применяем гравитационный эффект:
+        # движение с ускорением под действием гравитации
+        self.velocity[1] += self.gravity
+        # перемещаем частицу
+        self.rect.x += self.velocity[0]
+        self.rect.y += self.velocity[1]
+        # убиваем, если частица ушла за экран
+        if not self.rect.colliderect(self.screen_rect):
+            self.kill()
+
 
 class Enter(QMainWindow):
     def __init__(self):
@@ -73,13 +104,15 @@ def intro(screen, start_background_image):
 
 def make_current_board(board):
     line_for_del = board.del_line()
+    deleted_line = line_for_del
     cnt = 0
     if line_for_del is not None:
         cnt = len(line_for_del)
     while line_for_del is not None:
         board.delete(line_for_del)
         line_for_del = board.del_line()
-    return cnt
+        #deleted_line = deleted_line.union(line_for_del) if line_for_del is not None else deleted_line
+    return cnt, deleted_line
 
 
 def main():
@@ -91,6 +124,8 @@ def main():
     pygame.init()
     screen = pygame.display.set_mode(size)
     start_background = pygame.sprite.Sprite()
+    star_animation = pygame.sprite.Group()
+    clock = pygame.time.Clock()
     start_background_image = pygame.transform.scale(load_image("start_game.jpg"), size)
     start_background.image = start_background_image
     start_background.rect = start_background.image.get_rect()
@@ -129,14 +164,24 @@ def main():
                 running = False
             if event.type == pygame.MOUSEBUTTONDOWN:
                 board.get_click(event.pos)
-                new_board = make_current_board(board)
+                new_board, deleted_line = make_current_board(board)
                 if new_board:  # если очки прибавились, то обновляем счетчик
+                    numbers = range(-5, 6)
+                    for x, y in deleted_line:
+                        pos = [(x + 0.5) * board.cell_size + board.left, (y + 0.5) * board.cell_size + board.top]
+                        for _ in range(10):
+                            Particle(star_animation, pos, random.choice(numbers), random.choice(numbers), *size)
                     cnt += new_board
                     step_cnt += 1
                     pygame.draw.rect(screen2, 'white', (100, 10, 100, 25))
                     counter = cnt_fon.render(f'{cnt}', True, (180, 0, 0))
                     screen2.blit(counter, (100, 10))
+        board.render(screen=screen2, draw_only=True)
+        star_animation.update()
+        star_animation.draw(screen2)
+
         pygame.display.flip()
+        clock.tick(40)
     cur.execute(f'''UPDATE result SET num_of_move = "{step_cnt}"
                         WHERE Name = "{nickname}"''')
     con.commit()
