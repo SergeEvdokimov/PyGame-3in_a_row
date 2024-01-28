@@ -111,7 +111,7 @@ def make_current_board(board):
     while line_for_del is not None:
         board.delete(line_for_del)
         line_for_del = board.del_line()
-        #deleted_line = deleted_line.union(line_for_del) if line_for_del is not None else deleted_line
+        deleted_line = deleted_line.union(line_for_del) if line_for_del is not None else deleted_line
     return cnt, deleted_line
 
 
@@ -171,7 +171,7 @@ def main():
                         pos = [(x + 0.5) * board.cell_size + board.left, (y + 0.5) * board.cell_size + board.top]
                         for _ in range(10):
                             Particle(star_animation, pos, random.choice(numbers), random.choice(numbers), *size)
-                    cnt += new_board
+                    cnt += len(deleted_line)
                     step_cnt += 1
                     pygame.draw.rect(screen2, 'white', (100, 10, 100, 25))
                     counter = cnt_fon.render(f'{cnt}', True, (180, 0, 0))
@@ -181,7 +181,7 @@ def main():
         star_animation.draw(screen2)
 
         pygame.display.flip()
-        clock.tick(40)
+        clock.tick(100)
     cur.execute(f'''UPDATE result SET num_of_move = "{step_cnt}"
                         WHERE Name = "{nickname}"''')
     con.commit()
