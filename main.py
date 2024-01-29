@@ -60,11 +60,15 @@ class Enter(QMainWindow):
         global nickname
         nickname = self.Name.text()
         company_is_registered = self.check_name(nickname)
-        if not company_is_registered:
-            cur.execute(f"""INSERT INTO result(Name, num_of_move) 
-                                    VALUES('{nickname}', '{0}')""")
-            con.commit()
-        self.close()
+        if nickname:
+            if not company_is_registered:
+                cur.execute(f"""INSERT INTO result(Name, num_of_move) 
+                                        VALUES('{nickname}', '{0}')""")
+                con.commit()
+            self.close()
+            game()
+        else:
+            self.statusBar().showMessage('Введите ник')
 
 
 def intro(screen, start_background_image):
@@ -118,8 +122,11 @@ def make_current_board(board):
 def main():
     app = QApplication(sys.argv)
     ex = Enter()
-    #sys.exit(app.exec_())
+    ex.show()
+    sys.exit(app.exec())
 
+
+def game():
     global size
     pygame.init()
     screen = pygame.display.set_mode(size)
@@ -130,8 +137,6 @@ def main():
     start_background.image = start_background_image
     start_background.rect = start_background.image.get_rect()
     pygame.display.set_caption('3 в ряд')
-
-    ex.show()
 
     lvl_num = intro(screen, start_background_image)
     size = 420, 470
@@ -183,7 +188,7 @@ def main():
         pygame.display.flip()
         clock.tick(100)
     cur.execute(f'''UPDATE result SET num_of_move = "{step_cnt}"
-                        WHERE Name = "{nickname}"''')
+                            WHERE Name = "{nickname}"''')
     con.commit()
     #  TODO: таблица результатов
     pygame.quit()
