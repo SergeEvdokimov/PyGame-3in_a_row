@@ -8,7 +8,8 @@ from dask import Board
 
 from PyQt5.QtWidgets import QApplication
 from PyQt5 import uic
-from PyQt5.QtWidgets import QMainWindow
+from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QMainWindow, QPushButton, QTableWidget, QTableWidgetItem, QAbstractScrollArea
 
 con = sqlite3.connect('Results.sqlite')
 cur = con.cursor()
@@ -44,6 +45,54 @@ class Particle(pygame.sprite.Sprite):
             self.kill()
 
 
+class ResultsWidget(QMainWindow):
+    def __init__(self, parent=None):
+        super().__init__(parent)
+        # работа с параметрами окна
+        self.setGeometry(500, 100, 600, 600)
+        self.setWindowTitle('Результаты игры')
+        self.setWindowFlags(self.windowFlags() & ~Qt.WindowCloseButtonHint)
+
+        self.newGameButton = QPushButton('Начать сначала', self)
+        self.newGameButton.clicked.connect(self.start_again)
+        self.newGameButton.resize(200, 30)
+        self.newGameButton.move(10, 10)
+
+        self.closeWindowButton = QPushButton('Завершить игру', self)
+        self.closeWindowButton.clicked.connect(self.close_window)
+        self.closeWindowButton.resize(200, 30)
+        self.closeWindowButton.move(250, 10)
+
+        self.resultTable = QTableWidget(self)
+        self.resultTable.move(10, 50)
+        self.resultTable.resize(500, 450)
+        self.resultTable.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
+
+        query = cur.execute("SELECT * from result").fetchall()
+        self.resultTable.setRowCount(len(query))
+        self.resultTable.setColumnCount(len(query[0]))
+
+        title = ['Ник', 'Минимальное кол-во ходов']
+        self.resultTable.setHorizontalHeaderLabels(title)
+
+        for i, elem in enumerate(query):
+            for j, val in enumerate(elem):
+                self.resultTable.setItem(i, j, QTableWidgetItem(str(val)))
+                self.resultTable.item(i, j).setFlags(Qt.ItemIsDropEnabled | Qt.ItemIsSelectable)
+
+        self.resultTable.resizeColumnsToContents()  # подгон размера ячеек под количество текста в ячейках
+
+    def start_again(self):
+        global nickname
+        self.parent().EnterButton.setEnabled(True)
+        self.parent().Name.setText('')
+        self.close()
+        nickname = ''
+
+    def close_window(self):
+        self.parent().close()
+
+
 class Enter(QMainWindow):
     def __init__(self):
         super().__init__()
@@ -65,8 +114,9 @@ class Enter(QMainWindow):
                 cur.execute(f"""INSERT INTO result(Name, num_of_move) 
                                         VALUES('{nickname}', '{0}')""")
                 con.commit()
-            self.close()
+            self.EnterButton.setEnabled(False)
             game()
+            ResultsWidget(self).show()
         else:
             self.statusBar().showMessage('Введите ник')
 
@@ -119,13 +169,6 @@ def make_current_board(board):
     return cnt, deleted_line
 
 
-def main():
-    app = QApplication(sys.argv)
-    ex = Enter()
-    ex.show()
-    sys.exit(app.exec())
-
-
 def game():
     global size
     pygame.init()
@@ -139,8 +182,8 @@ def game():
     pygame.display.set_caption('3 в ряд')
 
     lvl_num = intro(screen, start_background_image)
-    size = 420, 470
-    screen2 = pygame.display.set_mode(size)
+    local_size = 420, 470
+    screen2 = pygame.display.set_mode(local_size)
     pygame.display.set_caption('3 в ряд')
     if lvl_num == 1:
         board = Board(7, screen2)
@@ -153,7 +196,7 @@ def game():
     step_cnt = 0
     cnt_fon = pygame.font.Font(None, 36)
     score = cnt_fon.render('Счет:', True, (255, 66, 103))
-    need_score = cnt_fon.render('Цель: 100', True, (255, 66, 103))
+    need_score = cnt_fon.render(f'Цель: {res}', True, (255, 66, 103))
     counter = cnt_fon.render(f'{cnt}', True, (180, 0, 0))
     screen2.blit(score, (10, 10))
     screen2.blit(counter, (100, 10))
@@ -166,6 +209,7 @@ def game():
     while running and cnt < res:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                ex.close()
                 running = False
             if event.type == pygame.MOUSEBUTTONDOWN:
                 board.get_click(event.pos)
@@ -175,7 +219,7 @@ def game():
                     for x, y in deleted_line:
                         pos = [(x + 0.5) * board.cell_size + board.left, (y + 0.5) * board.cell_size + board.top]
                         for _ in range(10):
-                            Particle(star_animation, pos, random.choice(numbers), random.choice(numbers), *size)
+                            Particle(star_animation, pos, random.choice(numbers), random.choice(numbers), *local_size)
                     cnt += len(deleted_line)
                     step_cnt += 1
                     pygame.draw.rect(screen2, 'white', (100, 10, 100, 25))
@@ -190,9 +234,11 @@ def game():
     cur.execute(f'''UPDATE result SET num_of_move = "{step_cnt}"
                             WHERE Name = "{nickname}"''')
     con.commit()
-    #  TODO: таблица результатов
     pygame.quit()
 
 
 if __name__ == '__main__':
-    main()
+    app = QApplication(sys.argv)
+    ex = Enter()
+    ex.show()
+    sys.exit(app.exec())
