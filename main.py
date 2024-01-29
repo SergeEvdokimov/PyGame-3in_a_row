@@ -1,20 +1,91 @@
+import io
+import gc
+import sys
 import pygame
 import random
-import sys
 import sqlite3
 
+from board import Board
 from load_image import load_image
-from dask import Board
 
-from PyQt5.QtWidgets import QApplication
 from PyQt5 import uic
 from PyQt5.QtCore import Qt
+from PyQt5.QtWidgets import QApplication
 from PyQt5.QtWidgets import QMainWindow, QPushButton, QTableWidget, QTableWidgetItem, QAbstractScrollArea
 
 con = sqlite3.connect('Results.sqlite')
 cur = con.cursor()
 size = (700, 700)
 nickname = ''
+
+first_window_ui = '''<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="geometry">
+   <rect>
+    <x>0</x>
+    <y>0</y>
+    <width>245</width>
+    <height>224</height>
+   </rect>
+  </property>
+  <property name="windowTitle">
+   <string>MainWindow</string>
+  </property>
+  <widget class="QWidget" name="centralwidget">
+   <widget class="QWidget" name="verticalLayoutWidget">
+    <property name="geometry">
+     <rect>
+      <x>20</x>
+      <y>10</y>
+      <width>201</width>
+      <height>161</height>
+     </rect>
+    </property>
+    <layout class="QVBoxLayout" name="verticalLayout">
+     <item>
+      <widget class="QLabel" name="ENTER">
+       <property name="font">
+        <font>
+         <family>Georgia</family>
+         <pointsize>17</pointsize>
+        </font>
+       </property>
+       <property name="text">
+        <string>Введите свой ник:</string>
+       </property>
+      </widget>
+     </item>
+     <item>
+      <widget class="QLineEdit" name="Name"/>
+     </item>
+     <item>
+      <widget class="QPushButton" name="EnterButton">
+       <property name="text">
+        <string>Войти</string>
+       </property>
+      </widget>
+     </item>
+    </layout>
+   </widget>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <property name="geometry">
+    <rect>
+     <x>0</x>
+     <y>0</y>
+     <width>245</width>
+     <height>21</height>
+    </rect>
+   </property>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
+'''
 
 
 class Particle(pygame.sprite.Sprite):
@@ -96,7 +167,8 @@ class ResultsWidget(QMainWindow):
 class Enter(QMainWindow):
     def __init__(self):
         super().__init__()
-        uic.loadUi('Enter.ui', self)
+        ui = io.StringIO(first_window_ui)
+        uic.loadUi(ui, self)
         self.setWindowTitle("Вход")
         self.EnterButton.clicked.connect(self.enter)
 
@@ -205,12 +277,10 @@ def game():
     pygame.display.flip()
     make_current_board(board)
     pygame.display.flip()
-    running = True
-    while running and cnt < res:
+    while cnt < res:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
-                ex.close()
-                running = False
+                sys.exit(0)
             if event.type == pygame.MOUSEBUTTONDOWN:
                 board.get_click(event.pos)
                 new_board, deleted_line = make_current_board(board)
@@ -231,6 +301,7 @@ def game():
 
         pygame.display.flip()
         clock.tick(100)
+        gc.collect()
     cur.execute(f'''UPDATE result SET num_of_move = "{step_cnt}"
                             WHERE Name = "{nickname}"''')
     con.commit()
