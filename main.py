@@ -11,13 +11,14 @@ from load_image import load_image
 from PyQt5 import uic
 from PyQt5.QtCore import Qt
 from PyQt5.QtWidgets import QApplication
-from PyQt5.QtWidgets import QMainWindow, QPushButton, QTableWidget, QTableWidgetItem, QAbstractScrollArea
+from PyQt5.QtWidgets import QMainWindow, QPushButton, QTableWidget, QTableWidgetItem, QAbstractScrollArea, QLabel
 
 con = sqlite3.connect('Results.sqlite')
 cur = con.cursor()
 size = (700, 700)
 nickname = ''
 new_user = False
+step_cnt = 0
 
 first_window_ui = '''<?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
@@ -140,6 +141,10 @@ class ResultsWidget(QMainWindow):
         self.resultTable.resize(500, 450)
         self.resultTable.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
 
+        self.resultLabel = QLabel(self)
+        self.resultLabel.move(10, 520)
+        self.resultLabel.resize(400, 50)
+
         query = cur.execute("SELECT * from result").fetchall()
         self.resultTable.setRowCount(len(query))
         self.resultTable.setColumnCount(len(query[0]))
@@ -174,7 +179,7 @@ class Enter(QMainWindow):
         self.EnterButton.clicked.connect(self.enter)
 
     def enter(self):
-        global nickname, new_user
+        global nickname, new_user, step_cnt
         nickname = self.Name.text()
         company_is_registered = len(cur.execute(f"""SELECT * FROM result 
         WHERE Name = '{nickname}'""").fetchall())
@@ -187,7 +192,10 @@ class Enter(QMainWindow):
                 con.commit()
             self.EnterButton.setEnabled(False)
             game()
-            ResultsWidget(self).show()
+            result_widget = ResultsWidget(self)
+            result_widget.show()
+            result_widget.resultLabel.setText(f'Ваш результат - {step_cnt} ходов')
+
         else:
             self.statusBar().showMessage('Введите ник')
 
@@ -242,7 +250,7 @@ def make_current_board(board):
 
 
 def game():
-    global size, new_user
+    global size, new_user, step_cnt
     pygame.init()
     screen = pygame.display.set_mode(size)
     start_background = pygame.sprite.Sprite()
