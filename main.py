@@ -17,6 +17,7 @@ con = sqlite3.connect('Results.sqlite')
 cur = con.cursor()
 size = (700, 700)
 nickname = ''
+new_user = False
 
 first_window_ui = '''<?xml version="1.0" encoding="UTF-8"?>
 <ui version="4.0">
@@ -172,19 +173,17 @@ class Enter(QMainWindow):
         self.setWindowTitle("Вход")
         self.EnterButton.clicked.connect(self.enter)
 
-    # Вход
-    def check_name(self, name):
-        return len(cur.execute(f"""SELECT * FROM result
-                        WHERE Name = '{name}'""").fetchall())
-
     def enter(self):
-        global nickname
+        global nickname, new_user
         nickname = self.Name.text()
-        company_is_registered = self.check_name(nickname)
+        company_is_registered = len(cur.execute(f"""SELECT * FROM result 
+        WHERE Name = '{nickname}'""").fetchall())
+
         if nickname:
             if not company_is_registered:
                 cur.execute(f"""INSERT INTO result(Name, num_of_move) 
                                         VALUES('{nickname}', '{0}')""")
+                new_user = True
                 con.commit()
             self.EnterButton.setEnabled(False)
             game()
@@ -209,6 +208,7 @@ def intro(screen, start_background_image):
             text_x = 320
         elif line != "Выберите размер поля:":
             text_x = 310
+
         text_y += rect.height
         rect.topleft = (text_x, text_y)
         text_y += rect.height
@@ -242,7 +242,7 @@ def make_current_board(board):
 
 
 def game():
-    global size
+    global size, new_user
     pygame.init()
     screen = pygame.display.set_mode(size)
     start_background = pygame.sprite.Sprite()
@@ -257,33 +257,46 @@ def game():
     local_size = 420, 470
     screen2 = pygame.display.set_mode(local_size)
     pygame.display.set_caption('3 в ряд')
+
     if lvl_num == 1:
         board = Board(7, screen2)
     elif lvl_num == 2:
         board = Board(10, screen2)
     else:
         board = Board(12, screen2)
+
     screen2.fill('white')
-    cnt, res = 0, 100
+    cnt, aim = 0, 100
     step_cnt = 0
     cnt_fon = pygame.font.Font(None, 36)
+
     score = cnt_fon.render('Счет:', True, (255, 66, 103))
-    need_score = cnt_fon.render(f'Цель: {res}', True, (255, 66, 103))
-    counter = cnt_fon.render(f'{cnt}', True, (180, 0, 0))
+    points_counter = cnt_fon.render(f'{cnt}', True, (180, 0, 0))
+    need_score = cnt_fon.render(f'Цель: {aim}', True, (255, 66, 103))
+    steps_made = cnt_fon.render(f'Ходов: {step_cnt}', True, (255, 66, 103))
+
     screen2.blit(score, (10, 10))
-    screen2.blit(counter, (100, 10))
-    screen2.blit(need_score, (200, 10))
+    screen2.blit(points_counter, (100, 10))
+    screen2.blit(need_score, (140, 10))
+    screen2.blit(steps_made, (280, 10))
+
     board.render()
     pygame.display.flip()
     make_current_board(board)
     pygame.display.flip()
-    while cnt < res:
+
+    while cnt < aim:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
+                if new_user:
+                    cur.execute(f"""delete from result where name == '{nickname}'""")
+                    con.commit()
                 sys.exit(0)
+
             if event.type == pygame.MOUSEBUTTONDOWN:
                 board.get_click(event.pos)
                 new_board, deleted_line = make_current_board(board)
+
                 if new_board:  # если очки прибавились, то обновляем счетчик
                     numbers = range(-5, 6)
                     for x, y in deleted_line:
@@ -292,9 +305,14 @@ def game():
                             Particle(star_animation, pos, random.choice(numbers), random.choice(numbers), *local_size)
                     cnt += len(deleted_line)
                     step_cnt += 1
-                    pygame.draw.rect(screen2, 'white', (100, 10, 100, 25))
+
+                    pygame.draw.rect(screen2, 'white', (100, 10, 30, 25))
                     counter = cnt_fon.render(f'{cnt}', True, (180, 0, 0))
+                    pygame.draw.rect(screen2, 'white', (280, 10, 150, 30))
+                    steps_made = cnt_fon.render(f'Ходов: {step_cnt}', True, (255, 66, 103))
+                    screen2.blit(steps_made, (280, 10))
                     screen2.blit(counter, (100, 10))
+
         board.render(screen=screen2, draw_only=True)
         star_animation.update()
         star_animation.draw(screen2)
