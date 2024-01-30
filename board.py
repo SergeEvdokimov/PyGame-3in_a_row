@@ -4,7 +4,8 @@ from load_image import load_image
 
 
 class Board:
-    def __init__(self, side, screen, left=0, top=50):
+    def __init__(self, side, screen, animation, left=0, top=50):
+        self.animation = animation
         self.screen = screen
         self.side = side
         self.board = [[randint(1, 5) for _ in range(side)] for _ in range(side)]
@@ -15,9 +16,7 @@ class Board:
         self.cells_for_swap = []
         self.green_square = False
 
-    def render(self, screen=None, draw_only=None):
-        if screen is None:
-            screen = self.screen
+    def render(self, draw_only=None):
         if not draw_only:
             self.green_square = False
         squares = []
@@ -30,13 +29,18 @@ class Board:
                 sprite.rect.x = i * self.cell_size + self.left
                 sprite.rect.y = j * self.cell_size + self.top
                 squares.append((sprite.rect.x, sprite.rect.y, self.cell_size, self.cell_size))
-        self.all_sprites.draw(screen)
+        self.all_sprites.draw(self.screen)
         for square in squares:
-            pygame.draw.rect(screen, 'black', square, 1)
+            pygame.draw.rect(self.screen, 'black', square, 1)
         if self.green_square:
             self.draw_green_square()
         if not draw_only:
             self.cells_for_swap.clear()
+        if self.animation:
+            self.draw_animation()
+
+    def draw_animation(self):
+        self.animation.draw(self.screen)
 
     # обмен клеток местами, после - перезаполнение
     def on_click(self):
@@ -47,6 +51,7 @@ class Board:
         pygame.display.flip()
         line_for_del = self.del_line()
         # в случае, если удалять нечего, клетки меняются обратно
+        self.draw_animation()
         pygame.time.delay(500)
         if line_for_del is None:
             self.board[x1][y1], self.board[x2][y2] = self.board[x2][y2], self.board[x1][y1]

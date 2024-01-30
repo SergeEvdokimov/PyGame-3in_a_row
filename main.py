@@ -10,6 +10,7 @@ from load_image import load_image
 
 from PyQt5 import uic
 from PyQt5.QtCore import Qt
+from PyQt5.QtGui import QColor
 from PyQt5.QtWidgets import QApplication
 from PyQt5.QtWidgets import QMainWindow, QPushButton, QTableWidget, QTableWidgetItem, QAbstractScrollArea, QLabel
 
@@ -28,8 +29,8 @@ first_window_ui = '''<?xml version="1.0" encoding="UTF-8"?>
    <rect>
     <x>0</x>
     <y>0</y>
-    <width>245</width>
-    <height>224</height>
+    <width>280</width>
+    <height>220</height>
    </rect>
   </property>
   <property name="windowTitle">
@@ -41,7 +42,7 @@ first_window_ui = '''<?xml version="1.0" encoding="UTF-8"?>
      <rect>
       <x>20</x>
       <y>10</y>
-      <width>201</width>
+      <width>241</width>
       <height>161</height>
      </rect>
     </property>
@@ -65,7 +66,7 @@ first_window_ui = '''<?xml version="1.0" encoding="UTF-8"?>
      <item>
       <widget class="QPushButton" name="EnterButton">
        <property name="text">
-        <string>Войти</string>
+        <string>Начать игру</string>
        </property>
       </widget>
      </item>
@@ -77,8 +78,8 @@ first_window_ui = '''<?xml version="1.0" encoding="UTF-8"?>
     <rect>
      <x>0</x>
      <y>0</y>
-     <width>245</width>
-     <height>21</height>
+     <width>280</width>
+     <height>26</height>
     </rect>
    </property>
   </widget>
@@ -120,6 +121,7 @@ class Particle(pygame.sprite.Sprite):
 
 class ResultsWidget(QMainWindow):
     def __init__(self, parent=None):
+        global nickname
         super().__init__(parent)
         # работа с параметрами окна
         self.setGeometry(500, 100, 600, 600)
@@ -156,6 +158,8 @@ class ResultsWidget(QMainWindow):
             for j, val in enumerate(elem):
                 self.resultTable.setItem(i, j, QTableWidgetItem(str(val)))
                 self.resultTable.item(i, j).setFlags(Qt.ItemIsDropEnabled | Qt.ItemIsSelectable)
+                if elem[0] == nickname:
+                    self.addingTable.item(i, j).setBackground(QColor(0, 255, 0))
 
         self.resultTable.resizeColumnsToContents()  # подгон размера ячеек под количество текста в ячейках
 
@@ -267,11 +271,11 @@ def game():
     pygame.display.set_caption('3 в ряд')
 
     if lvl_num == 1:
-        board = Board(7, screen2)
+        board = Board(7, screen2, star_animation)
     elif lvl_num == 2:
-        board = Board(10, screen2)
+        board = Board(10, screen2, star_animation)
     else:
-        board = Board(12, screen2)
+        board = Board(12, screen2, star_animation)
 
     screen2.fill('white')
     cnt, aim = 0, 100
@@ -321,9 +325,9 @@ def game():
                     screen2.blit(steps_made, (280, 10))
                     screen2.blit(counter, (100, 10))
 
-        board.render(screen=screen2, draw_only=True)
         star_animation.update()
-        star_animation.draw(screen2)
+        if star_animation:
+            board.render(draw_only=True)
 
         pygame.display.flip()
         clock.tick(100)
