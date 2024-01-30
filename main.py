@@ -180,7 +180,12 @@ class Enter(QMainWindow):
         ui = io.StringIO(first_window_ui)
         uic.loadUi(ui, self)
         self.setWindowTitle("Вход")
+        self.EnterButton.setAutoDefault(True)
         self.EnterButton.clicked.connect(self.enter)
+
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_Return:
+            self.enter()
 
     def enter(self):
         global nickname, new_user, step_cnt
