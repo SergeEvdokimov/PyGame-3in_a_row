@@ -159,7 +159,7 @@ class ResultsWidget(QMainWindow):
                 self.resultTable.setItem(i, j, QTableWidgetItem(str(val)))
                 self.resultTable.item(i, j).setFlags(Qt.ItemIsDropEnabled | Qt.ItemIsSelectable)
                 if elem[0] == nickname:
-                    self.addingTable.item(i, j).setBackground(QColor(0, 255, 0))
+                    self.resultTable.item(i, j).setBackground(QColor(0, 255, 0))
 
         self.resultTable.resizeColumnsToContents()  # подгон размера ячеек под количество текста в ячейках
 
@@ -331,8 +331,7 @@ def game():
                     screen2.blit(counter, (100, 10))
 
         star_animation.update()
-        if star_animation:
-            board.render(draw_only=True)
+        board.render(draw_only=True)
 
         pygame.display.flip()
         clock.tick(100)
