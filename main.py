@@ -148,7 +148,7 @@ class ResultsWidget(QMainWindow):
         self.resultLabel.resize(400, 50)
 
         query = sorted(cur.execute("SELECT * from result").fetchall(),
-                       key=lambda x: x[1], reverse=True)
+                       key=lambda x: x[1])
         self.resultTable.setRowCount(len(query))
         self.resultTable.setColumnCount(len(query[0]))
 
@@ -204,7 +204,7 @@ class Enter(QMainWindow):
             game()
             result_widget = ResultsWidget(self)
             result_widget.show()
-            result_widget.resultLabel.setText(f'Ваш результат - {step_cnt} ходов')
+            result_widget.resultLabel.setText(f'Потребовалось ходов: {step_cnt}')
 
         else:
             self.statusBar().showMessage('Введите ник')
