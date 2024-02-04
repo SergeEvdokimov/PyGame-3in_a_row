@@ -24,11 +24,13 @@ class Board:
             for j in range(self.side):
                 sprite = pygame.sprite.Sprite(self.all_sprites)
                 sprite.image = load_image(f"{self.board[i][j]}.png", 'white')
-                sprite.image = pygame.transform.scale(sprite.image, (self.cell_size, self.cell_size))
+                sprite.image = pygame.transform.scale(sprite.image,
+                                                      (self.cell_size, self.cell_size))
                 sprite.rect = sprite.image.get_rect()
                 sprite.rect.x = i * self.cell_size + self.left
                 sprite.rect.y = j * self.cell_size + self.top
-                squares.append((sprite.rect.x, sprite.rect.y, self.cell_size, self.cell_size))
+                squares.append((sprite.rect.x, sprite.rect.y,
+                                self.cell_size, self.cell_size))
         self.all_sprites.draw(self.screen)
         for square in squares:
             pygame.draw.rect(self.screen, 'black', square, 1)
@@ -59,7 +61,8 @@ class Board:
 
     # возвращает координаты клетки (ячейки в массиве)
     def get_cell(self, mouse_pos):
-        cell_x, cell_y = (mouse_pos[0] - self.left) // self.cell_size, (mouse_pos[1] - self.top) // self.cell_size
+        cell_x, cell_y = (mouse_pos[0] - self.left) // self.cell_size,\
+            (mouse_pos[1] - self.top) // self.cell_size
         if 0 <= cell_x <= self.side and 0 <= cell_y <= self.side:
             return cell_x, cell_y
 
@@ -73,13 +76,16 @@ class Board:
         cell = self.get_cell(mouse_pos)
         if cell:
             self.cells_for_swap.append(cell)
+
             if len(self.cells_for_swap) == 1:
                 self.green_square = True
                 self.draw_green_square()
             elif len(self.cells_for_swap) == 2:
-                if abs(cell[0] - self.cells_for_swap[0][0]) == 1 and cell[1] - self.cells_for_swap[0][1] == 0:
+                if abs(cell[0] - self.cells_for_swap[0][0]) == 1 \
+                        and cell[1] - self.cells_for_swap[0][1] == 0:
                     self.on_click()
-                elif abs(cell[1] - self.cells_for_swap[0][1]) == 1 and cell[0] - self.cells_for_swap[0][0] == 0:
+                elif abs(cell[1] - self.cells_for_swap[0][1]) == 1 \
+                        and cell[0] - self.cells_for_swap[0][0] == 0:
                     self.on_click()
                 else:
                     self.render()
@@ -89,6 +95,7 @@ class Board:
         line_to_del = []
         for x in range(self.side):
             for y in range(self.side):
+
                 if 1 <= x < self.side - 1:
                     if self.board[x - 1][y] == self.board[x][y] == self.board[x + 1][y]:
                         line_to_del.extend([(x - 1, y), (x, y), (x + 1, y)])
@@ -98,6 +105,7 @@ class Board:
                         for x_add in range(x + 1, self.side):
                             if self.board[x_add][y] == line_to_del[0]:
                                 line_to_del.append((x_add, y))
+
                 if 1 <= y < self.side - 1:
                     if self.board[x][y - 1] == self.board[x][y] == self.board[x][y + 1]:
                         line_to_del.extend([(x, y - 1), (x, y), (x, y + 1)])
@@ -118,6 +126,7 @@ class Board:
             return
         for cell in line_for_del:
             self.board[cell[0]][cell[1]] = 0
+
         for column in range(self.side):
             if 0 in self.board[column]:
                 c = 0

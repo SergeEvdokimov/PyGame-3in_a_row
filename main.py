@@ -147,7 +147,8 @@ class ResultsWidget(QMainWindow):
         self.resultLabel.move(10, 520)
         self.resultLabel.resize(400, 50)
 
-        query = cur.execute("SELECT * from result").fetchall()
+        query = sorted(cur.execute("SELECT * from result").fetchall(),
+                       key=lambda x: x[1], reverse=True)
         self.resultTable.setRowCount(len(query))
         self.resultTable.setColumnCount(len(query[0]))
 
@@ -302,6 +303,9 @@ def game():
     make_current_board(board)
     pygame.display.flip()
 
+    need_to_draw = True
+    first_stop = True
+
     while cnt < aim:
         for event in pygame.event.get():
             if event.type == pygame.QUIT:
@@ -315,11 +319,13 @@ def game():
                 new_board, deleted_line = make_current_board(board)
 
                 if new_board:  # если очки прибавились, то обновляем счетчик
-                    numbers = range(-5, 6)
+                    numbers = range(-3, 4)
                     for x, y in deleted_line:
-                        pos = [(x + 0.5) * board.cell_size + board.left, (y + 0.5) * board.cell_size + board.top]
-                        for _ in range(10):
-                            Particle(star_animation, pos, random.choice(numbers), random.choice(numbers), *local_size)
+                        pos = [(x + 0.5) * board.cell_size + board.left,
+                               (y + 0.5) * board.cell_size + board.top]
+                        for _ in range(3):
+                            Particle(star_animation, pos, random.choice(numbers),
+                                     random.choice(numbers), *local_size)
                     cnt += len(deleted_line)
                     step_cnt += 1
 
@@ -331,10 +337,21 @@ def game():
                     screen2.blit(counter, (100, 10))
 
         star_animation.update()
-        board.render(draw_only=True)
+
+        if need_to_draw:
+            board.render(draw_only=True)
+
+        if star_animation:
+            need_to_draw = True
+            first_stop = True
+        else:
+            need_to_draw = False
+            if first_stop:
+                board.render(draw_only=True)
+            first_stop = False
 
         pygame.display.flip()
-        clock.tick(100)
+        clock.tick(50)
         gc.collect()
     cur.execute(f'''UPDATE result SET num_of_move = "{step_cnt}"
                             WHERE Name = "{nickname}"''')
