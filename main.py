@@ -331,8 +331,7 @@ def game():
                     screen2.blit(counter, (100, 10))
 
         star_animation.update()
-        if star_animation:
-            board.render(draw_only=True)
+        board.render(draw_only=True)
 
         pygame.display.flip()
         clock.tick(100)
