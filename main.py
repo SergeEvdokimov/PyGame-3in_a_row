@@ -353,7 +353,9 @@ def game():
         pygame.display.flip()
         clock.tick(50)
         gc.collect()
-    cur.execute(f'''UPDATE result SET num_of_move = "{step_cnt}"
+    prev_res = cur.execute(f"""SELECT * FROM result WHERE Name = '{nickname}'""").fetchall()[-1][-1]
+    prev_res = prev_res if prev_res else 34
+    cur.execute(f'''UPDATE result SET num_of_move = "{min(step_cnt, prev_res)}"
                             WHERE Name = "{nickname}"''')
     con.commit()
     pygame.quit()
